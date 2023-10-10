@@ -56,6 +56,9 @@ public class PlayerModel : MonoBehaviour
             {
                 OnMove();
             });
+
+        this.OnCollisionEnterAsObservable()
+            .Subscribe(x => Debug.Log(x.gameObject.name));
     }
 
     private void OnEnable()
