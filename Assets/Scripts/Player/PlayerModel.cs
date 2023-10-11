@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
@@ -8,6 +9,8 @@ using UniRx.Triggers;
 public class PlayerModel : MonoBehaviour
 {
     #region property
+    public IObservable<int> CurrentCarrierAmountObserver => _currentCarrierAmountRP;
+    public IObservable<Vector3> MoveDirectionObserver => _moveDirectionSubject;
     #endregion
 
     #region serialize
@@ -16,30 +19,37 @@ public class PlayerModel : MonoBehaviour
 
     [SerializeField]
     private float _rotateSpeed = 8.0f;
+
+    [SerializeField]
+    private GameObject _playerObject = default;
     #endregion
 
     #region private
     private PlayerInput _input;
-    private Animator _anim;
     private Rigidbody _rb;
+    private Animator _anim;
 
     private Vector2 _inputAxis;
     private Vector3 _inputMove;
     private float _currentMoveSpeed = 0;
+    private PlayerAnimationType _currentType;
     #endregion
 
     #region Constant
+    private const int MAX_CARRIER_AMOUNT = 5;
     #endregion
 
     #region Event
+    private ReactiveProperty<int> _currentCarrierAmountRP = new ReactiveProperty<int>();
+    private Subject<Vector3> _moveDirectionSubject = new Subject<Vector3>();
     #endregion
 
     #region unity methods
     private void Awake()
     {
         _input = GetComponent<PlayerInput>();
-        _anim = GetComponent<Animator>();
         _rb = GetComponent<Rigidbody>();
+        _anim = _playerObject.GetComponent<Animator>();
     }
 
     private void Start()
@@ -48,17 +58,8 @@ public class PlayerModel : MonoBehaviour
             .TakeUntilDestroy(this)
             .Subscribe(_ =>
             {
-                OnRotate();
-            });
-        this.FixedUpdateAsObservable()
-            .TakeUntilDestroy(this)
-            .Subscribe(_ =>
-            {
                 OnMove();
             });
-
-        this.OnCollisionEnterAsObservable()
-            .Subscribe(x => Debug.Log(x.gameObject.name));
     }
 
     private void OnEnable()
@@ -75,6 +76,16 @@ public class PlayerModel : MonoBehaviour
     #endregion
 
     #region public method
+    public void AddTreasure()
+    {
+        _currentCarrierAmountRP.Value++;
+        Debug.Log(_currentCarrierAmountRP.Value);
+    }
+
+    public bool IsCanCarry()
+    {
+        return _currentCarrierAmountRP.Value < MAX_CARRIER_AMOUNT;
+    }
     #endregion
 
     #region private method
@@ -83,24 +94,36 @@ public class PlayerModel : MonoBehaviour
         if (_inputAxis == Vector2.zero)
         {
             _rb.velocity = Vector3.zero;
+            PlayAnimation(PlayerAnimationType.Idle);
         }
         else
         {
             _inputMove = Vector3.forward * _inputAxis.y + Vector3.right * _inputAxis.x;
             _inputMove = Camera.main.transform.TransformDirection(_inputMove);
+            _inputMove.y = 0;
+
+            OnRotate();
+            _moveDirectionSubject.OnNext(_inputMove);
 
             Vector3 velocity = _inputMove.normalized * _moveSpeed;
             velocity.y = _rb.velocity.y;
             _rb.velocity = velocity;
+
+            if (_currentCarrierAmountRP.Value > 0)
+            {
+                PlayAnimation(PlayerAnimationType.Move_Carry);
+            }
+            else
+            {
+                PlayAnimation(PlayerAnimationType.Move_Default);
+            }
         }
-        Debug.Log(_rb.velocity);
     }
 
     private void OnRotate()
     {
         Quaternion targetRotation = Quaternion.LookRotation(_inputMove);
-        transform.rotation = Quaternion.Slerp(transform.rotation, targetRotation, Time.deltaTime * _rotateSpeed); ;
-
+        transform.rotation = Quaternion.Slerp(transform.rotation, targetRotation, Time.deltaTime * _rotateSpeed);
     }
 
     private void OnMoveInput(InputAction.CallbackContext context)
@@ -111,6 +134,17 @@ public class PlayerModel : MonoBehaviour
     private void OnMoveStop(InputAction.CallbackContext context)
     {
         _inputAxis = Vector2.zero;
+    }
+
+    private void PlayAnimation(PlayerAnimationType type)
+    {
+        if (_currentType == type)
+        {
+            return;
+        }
+
+        _anim.CrossFadeInFixedTime(type.ToString(), 0.2f);
+        _currentType = type;    
     }
     #endregion
 

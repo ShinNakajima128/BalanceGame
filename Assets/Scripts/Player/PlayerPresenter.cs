@@ -9,6 +9,14 @@ public class PlayerPresenter : MonoBehaviour
     #endregion
 
     #region serialize
+    [SerializeField]
+    private PlayerModel _model = default;
+
+    [SerializeField]
+    private PlayerView _view = default;
+
+    [SerializeField]
+    private Carrier _carrier = default;
     #endregion
 
     #region private
@@ -28,7 +36,16 @@ public class PlayerPresenter : MonoBehaviour
 
     private void Start()
     {
-
+        //‰^‚ñ‚Å‚¢‚é•ó” ‚Ì”‚ª•Ï‰»‚µ‚½Û‚Ìˆ—‚ð“o˜^
+        _model.CurrentCarrierAmountObserver
+              .TakeUntilDestroy(this)
+              .Subscribe(value =>
+              {
+                  _carrier.ChangeCarrierStatus(value);
+              });
+        _model.MoveDirectionObserver
+              .TakeUntilDestroy(this)
+              .Subscribe(value => _carrier.AddForceCarrier(value));
     }
     #endregion
 
