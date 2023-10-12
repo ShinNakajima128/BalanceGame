@@ -4,6 +4,7 @@ using UnityEngine;
 using UniRx;
 using Cysharp.Threading.Tasks;
 using DG.Tweening;
+using Cinemachine;
 
 public class TitleDirector : MonoBehaviour
 {
@@ -34,6 +35,8 @@ public class TitleDirector : MonoBehaviour
     #endregion
 
     #region private
+    CinemachineImpulseSource _impulseSource;
+
     private Tween _shipTween;
     private Tween _waveTween;
     #endregion
@@ -47,7 +50,7 @@ public class TitleDirector : MonoBehaviour
     #region unity methods
     private void Awake()
     {
-
+        _impulseSource = GetComponent<CinemachineImpulseSource>();
     }
 
     private void Start()
@@ -91,7 +94,7 @@ public class TitleDirector : MonoBehaviour
                                .SetEase(Ease.Linear)
                                .AsyncWaitForCompletion();
 
-
+        _impulseSource.GenerateImpulse();
         Collider[] colliders = Physics.OverlapSphere(_explotionPoint.position, 10);
 
         foreach (var c in colliders)

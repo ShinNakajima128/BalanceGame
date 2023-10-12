@@ -87,6 +87,7 @@ public class GameManager : SingletonMonoBehaviour<GameManager>
     public void OnGameStart()
     {
         _gameStartSubject.OnNext(Unit.Default);
+        _isInGameSubject.OnNext(true);
         _isGameStarted = true;
     }
 
