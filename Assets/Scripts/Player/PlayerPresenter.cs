@@ -50,6 +50,14 @@ public class PlayerPresenter : MonoBehaviour
         _model.ResetCarryObserver
               .TakeUntilDestroy(this)
               .Subscribe(value => _carrier.ChangeCarrierStatus(value));
+
+        GameManager.Instance.IsInGameObserver
+                            .TakeUntilDestroy(this)
+                            .Subscribe(value => _model.IsCanMove = value);
+
+        StageManager.Instance.DropTreasureObserver
+                             .TakeUntilDestroy(this)
+                             .Subscribe(_ => _model.OnResetCarry());
     }
     #endregion
 

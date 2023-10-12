@@ -12,6 +12,12 @@ public class StageView : MonoBehaviour
     #region serialize
     [SerializeField]
     private TextMeshProUGUI _limitTimeTMP = default;
+
+    [SerializeField]
+    private TextMeshProUGUI _currentCarryAmountTMP = default;
+
+    [SerializeField]
+    private TextMeshProUGUI _comboAmountTMP = default;
     #endregion
 
     #region private
@@ -39,6 +45,22 @@ public class StageView : MonoBehaviour
     public void LimitTimeView(int value)
     {
         _limitTimeTMP.text = value.ToString();
+    }
+    public void CarryAmountView(int amount)
+    {
+        _currentCarryAmountTMP.text = $"{amount}コ";
+    }
+
+    public void ComboAmountView(int amount)
+    {
+        if (amount <= 0)
+        {
+            _comboAmountTMP.text = "";
+        }
+        else
+        {
+            _comboAmountTMP.text = $"{amount}コンボ！";
+        }
     }
     #endregion
 

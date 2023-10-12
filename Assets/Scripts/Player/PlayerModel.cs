@@ -13,6 +13,7 @@ public class PlayerModel : MonoBehaviour
     public IObservable<Vector3> MoveDirectionObserver => _moveDirectionSubject;
     public IObservable<int> ResetCarryObserver => _resetCarrySubject;
     public int CurrentCarryAmount => _currentCarrierAmountRP.Value;
+    public bool IsCanMove { get => _isCanMove; set => _isCanMove = value; }
     #endregion
 
     #region serialize
@@ -35,6 +36,7 @@ public class PlayerModel : MonoBehaviour
     private Vector3 _inputMove;
     private float _currentMoveSpeed = 0;
     private PlayerAnimationType _currentType;
+    private bool _isCanMove = false;
     #endregion
 
     #region Constant
@@ -53,12 +55,14 @@ public class PlayerModel : MonoBehaviour
         _input = GetComponent<PlayerInput>();
         _rb = GetComponent<Rigidbody>();
         _anim = _playerObject.GetComponent<Animator>();
+        _currentMoveSpeed = _moveSpeed;
     }
 
     private void Start()
     {
         this.UpdateAsObservable()
             .TakeUntilDestroy(this)
+            .Where(_ => _isCanMove)
             .Subscribe(_ =>
             {
                 OnMove();
@@ -66,7 +70,7 @@ public class PlayerModel : MonoBehaviour
 
         this.FixedUpdateAsObservable()
             .TakeUntilDestroy(this)
-            .Where(_ => _inputMove != Vector3.zero)
+            .Where(_ => _isCanMove && _inputMove != Vector3.zero)
             .Subscribe(_ =>
             {
                 _moveDirectionSubject.OnNext(_inputMove);
@@ -90,6 +94,7 @@ public class PlayerModel : MonoBehaviour
     public void AddTreasure()
     {
         _currentCarrierAmountRP.Value++;
+        _currentMoveSpeed = _moveSpeed - (_currentCarrierAmountRP.Value * 0.25f);
         Debug.Log(_currentCarrierAmountRP.Value);
     }
 
@@ -121,7 +126,7 @@ public class PlayerModel : MonoBehaviour
 
             OnRotate();
 
-            Vector3 velocity = _inputMove.normalized * _moveSpeed;
+            Vector3 velocity = _inputMove.normalized * _currentMoveSpeed;
             velocity.y = _rb.velocity.y;
             _rb.velocity = velocity;
 
