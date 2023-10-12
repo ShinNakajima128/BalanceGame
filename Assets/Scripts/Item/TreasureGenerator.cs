@@ -8,7 +8,6 @@ public class TreasureGenerator : MonoBehaviour
 {
     #region property
     public static TreasureGenerator Instance { get; private set; }
-    public int MaxGenerateNum => _generatePoints.Length;
     #endregion
 
     #region serialize
@@ -28,6 +27,7 @@ public class TreasureGenerator : MonoBehaviour
     #endregion
 
     #region Constant
+    private const int MAX_GENERATE_AMOUNT = 5;
     #endregion
 
     #region Event
@@ -50,13 +50,23 @@ public class TreasureGenerator : MonoBehaviour
     private void Start()
     {
         Initialize();
+        StageManager.Instance.GenerateTreasureObserver
+                             .TakeUntilDestroy(this)
+                             .Subscribe(value => OnGenerate(value));
     }
     #endregion
 
     #region public method
-    public void OnGenerate()
+    public void OnGenerate(int amount)
     {
-        if (_currentGenerateAmountRP.Value >= MaxGenerateNum)
+        for (int i = 0; i < amount; i++)
+        {
+            Generate();
+        }
+    }
+    private void Generate()
+    {
+        if (_currentGenerateAmountRP.Value > MAX_GENERATE_AMOUNT)
         {
             return;
         }
@@ -65,12 +75,21 @@ public class TreasureGenerator : MonoBehaviour
 
         while (!isSetCompleted)
         {
-            int randomIndex = UnityEngine.Random.Range(0, MaxGenerateNum);
+            int randomIndex = UnityEngine.Random.Range(0, _generatePoints.Length);
 
             if (!_isSetArray[randomIndex])
             {
                 var treasure = _treasurePool.Rent();
                 treasure.transform.position = _generatePoints[randomIndex].position;
+
+                treasure.GetTreasureObserver
+                        .TakeUntilDisable(treasure)
+                        .Subscribe(_ =>
+                        {
+                            int index = randomIndex;
+                            _isSetArray[index] = false;
+                            _currentGenerateAmountRP.Value--;
+                        });
 
                 int randomRotateX = UnityEngine.Random.Range(0, 360);
                 int randomRotateY = UnityEngine.Random.Range(0, 360);
@@ -79,6 +98,7 @@ public class TreasureGenerator : MonoBehaviour
                 treasure.transform.eulerAngles = new Vector3(randomRotateX, randomRotateY, randomRotateZ);
                 _isSetArray[randomIndex] = true;
                 isSetCompleted = true;
+                _currentGenerateAmountRP.Value++;
             }
         }
     }
@@ -87,10 +107,7 @@ public class TreasureGenerator : MonoBehaviour
     #region private method
     private void Initialize()
     {
-        for (int i = 0; i < MaxGenerateNum; i++)
-        {
-            OnGenerate();
-        }
+        OnGenerate(MAX_GENERATE_AMOUNT);
     }
     #endregion
 

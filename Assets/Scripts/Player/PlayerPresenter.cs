@@ -46,6 +46,10 @@ public class PlayerPresenter : MonoBehaviour
         _model.MoveDirectionObserver
               .TakeUntilDestroy(this)
               .Subscribe(value => _carrier.AddForceCarrier(value));
+
+        _model.ResetCarryObserver
+              .TakeUntilDestroy(this)
+              .Subscribe(value => _carrier.ChangeCarrierStatus(value));
     }
     #endregion
 

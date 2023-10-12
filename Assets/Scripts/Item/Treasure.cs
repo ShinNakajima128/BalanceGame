@@ -1,13 +1,14 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UniRx;
 using UniRx.Triggers;
-using System;
 
 public class Treasure : PoolableBase
 {
     #region property
+    public IObservable<Unit> GetTreasureObserver => _getTreasureSubject;
     #endregion
 
     #region serialize
@@ -20,6 +21,7 @@ public class Treasure : PoolableBase
     #endregion
 
     #region Event
+    private Subject<Unit> _getTreasureSubject = new Subject<Unit>();
     #endregion
 
     #region unity methods
@@ -42,6 +44,7 @@ public class Treasure : PoolableBase
                 if (player != null && player.IsCanCarry())
                 {
                     Use(player);
+                    _getTreasureSubject.OnNext(Unit.Default);
                     gameObject.SetActive(false);
                 }
             });

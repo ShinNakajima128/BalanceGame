@@ -11,6 +11,8 @@ public class PlayerModel : MonoBehaviour
     #region property
     public IObservable<int> CurrentCarrierAmountObserver => _currentCarrierAmountRP;
     public IObservable<Vector3> MoveDirectionObserver => _moveDirectionSubject;
+    public IObservable<int> ResetCarryObserver => _resetCarrySubject;
+    public int CurrentCarryAmount => _currentCarrierAmountRP.Value;
     #endregion
 
     #region serialize
@@ -42,6 +44,7 @@ public class PlayerModel : MonoBehaviour
     #region Event
     private ReactiveProperty<int> _currentCarrierAmountRP = new ReactiveProperty<int>();
     private Subject<Vector3> _moveDirectionSubject = new Subject<Vector3>();
+    private Subject<int> _resetCarrySubject = new Subject<int>();
     #endregion
 
     #region unity methods
@@ -59,6 +62,14 @@ public class PlayerModel : MonoBehaviour
             .Subscribe(_ =>
             {
                 OnMove();
+            });
+
+        this.FixedUpdateAsObservable()
+            .TakeUntilDestroy(this)
+            .Where(_ => _inputMove != Vector3.zero)
+            .Subscribe(_ =>
+            {
+                _moveDirectionSubject.OnNext(_inputMove);
             });
     }
 
@@ -86,6 +97,12 @@ public class PlayerModel : MonoBehaviour
     {
         return _currentCarrierAmountRP.Value < MAX_CARRIER_AMOUNT;
     }
+
+    public void OnResetCarry()
+    {
+        _resetCarrySubject.OnNext(0);
+        _currentCarrierAmountRP.Value = 0;
+    }
     #endregion
 
     #region private method
@@ -103,7 +120,6 @@ public class PlayerModel : MonoBehaviour
             _inputMove.y = 0;
 
             OnRotate();
-            _moveDirectionSubject.OnNext(_inputMove);
 
             Vector3 velocity = _inputMove.normalized * _moveSpeed;
             velocity.y = _rb.velocity.y;
