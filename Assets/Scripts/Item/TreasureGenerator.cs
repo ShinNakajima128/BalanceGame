@@ -66,11 +66,6 @@ public class TreasureGenerator : MonoBehaviour
     }
     private void Generate()
     {
-        if (_currentGenerateAmountRP.Value > MAX_GENERATE_AMOUNT)
-        {
-            return;
-        }
-
         bool isSetCompleted = false;
 
         while (!isSetCompleted)

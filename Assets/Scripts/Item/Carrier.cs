@@ -46,6 +46,14 @@ public class Carrier : MonoBehaviour
     private void Start()
     {
         ChangeCarrierStatus(0);
+        this.OnCollisionEnterAsObservable()
+            .TakeUntilDestroy(this)
+            .Where(x => x.gameObject.CompareTag(GameTag.Stage))
+            .Subscribe(_ =>
+            {
+                StageManager.Instance.OnDropTreasure();
+                Debug.Log($"hit");
+            });
     }
     #endregion
 
@@ -62,7 +70,9 @@ public class Carrier : MonoBehaviour
                 transform.localPosition = _originPosition;
                 transform.localEulerAngles = _originRotation;
                 _rb.velocity = Vector3.zero;
+                _rb.angularVelocity = Vector3.zero; //角度が「0」のままだと角度の絶対値を取得する際に「359」の値となるため、x, zの初期値を「0」以外としている
                 _rb.useGravity = false;
+                _currentPushAmount = _pushAmount;
                 break;
             case 1:
                 _treasureObjects[0].SetActive(true);
@@ -84,11 +94,13 @@ public class Carrier : MonoBehaviour
                 _treasureObjects[3].SetActive(true);
                 _collider.center = new Vector3(0f, 1.35f, 0f);
                 _collider.height = 2.75f;
+                _currentPushAmount = _pushAmount * 1.25f;
                 break;
             case 5:
                 _treasureObjects[4].SetActive(true);
                 _collider.center = new Vector3(0f, 1.75f, 0f);
                 _collider.height = 3.5f;
+                _currentPushAmount = _pushAmount * 1.5f;
                 break;
             default:
                 break;
@@ -101,9 +113,7 @@ public class Carrier : MonoBehaviour
         if (_treasureObjects[2].activeSelf)
         {
             var rot = new Vector3(dir.x, 0, dir.z);
-            _rb.angularVelocity = rot.normalized * _pushAmount;
-
-            Debug.Log(dir);
+            _rb.angularVelocity = -rot.normalized * _pushAmount;
         }
     }
     #endregion
