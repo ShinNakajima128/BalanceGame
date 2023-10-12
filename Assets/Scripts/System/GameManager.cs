@@ -3,6 +3,9 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UniRx;
+using UniRx.Triggers;
+using Cysharp.Threading.Tasks;
+using DG.Tweening;
 
 /// <summary>
 /// ゲームの進行状況、イベント処理を管理するManager
@@ -23,21 +26,8 @@ public class GameManager : SingletonMonoBehaviour<GameManager>
     protected override bool IsDontDestroyOnLoad => true;
     #endregion
 
-    #region serialize
-    [Tooltip("タイトル画面のCanvasGroup")]
-    [SerializeField]
-    private CanvasGroup _titleGroup = default;
-
-    [Tooltip("インゲーム画面のCanvasGroup")]
-    [SerializeField]
-    private CanvasGroup _inGameGroup = default;
-
-    [Tooltip("リザルト画面のCanvasGroup")]
-    [SerializeField]
-    private CanvasGroup _resultGroup = default;
-    #endregion
-
-    #region private
+    #region private 
+    private bool _isGameStarted = false;
     #endregion
 
     #region Event
@@ -70,8 +60,18 @@ public class GameManager : SingletonMonoBehaviour<GameManager>
     private void Start()
     {
         //画面を明転
-        //FadeManager.Fade(FadeType.In);
-        
+        FadeManager.Fade(FadeType.In);
+
+        this.UpdateAsObservable()
+            .TakeUntilDestroy(this)
+            .Where(_ => !_isGameStarted)
+            .Subscribe(_ =>
+            {
+                if (Input.anyKeyDown)
+                {
+                    OnGameStart();
+                }
+            });
     }
     #endregion
 
@@ -80,14 +80,14 @@ public class GameManager : SingletonMonoBehaviour<GameManager>
     /// ゲームの状態を更新する
     /// </summary>
     /// <param name="nextState"></param>
-    
+
     /// <summary>
     /// ゲームを開始する
     /// </summary>
     public void OnGameStart()
     {
         _gameStartSubject.OnNext(Unit.Default);
-        
+        _isGameStarted = true;
     }
 
     /// <summary>
@@ -95,7 +95,7 @@ public class GameManager : SingletonMonoBehaviour<GameManager>
     /// </summary>
     public void OnGameReStart()
     {
-        
+
     }
     /// <summary>
     /// インゲーム中かどうかを切り替える
@@ -115,28 +115,6 @@ public class GameManager : SingletonMonoBehaviour<GameManager>
         _isInGameSubject.OnNext(!value);
     }
     /// <summary>
-    /// コンボ数を増加する
-    /// </summary>
-    public void OnAddConbo()
-    {
-        _updateComboSubject.OnNext(Unit.Default);
-    }
-
-    /// <summary>
-    /// コンボ数をリセットする
-    /// </summary>
-    public void OnResetCombo()
-    {
-        _resetComboSubject.OnNext(Unit.Default);
-    }
-    /// <summary>
-    /// プレイヤーの被弾処理を実行する
-    /// </summary>
-    public void OnPlayerDamage()
-    {
-        _playerDamageSubject.OnNext(Unit.Default);
-    }
-    /// <summary>
     /// ゲームを終了する
     /// </summary>
     public void OnGameEnd()
@@ -152,11 +130,5 @@ public class GameManager : SingletonMonoBehaviour<GameManager>
     {
         _gameResetSubject.OnNext(Unit.Default);
     }
-
-    /// <summary>
-    /// ゲーム画面を切り替える
-    /// </summary>
-    /// <param name="state">ゲームの状態</param>
-   
     #endregion
 }
