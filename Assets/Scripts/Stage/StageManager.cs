@@ -13,7 +13,7 @@ public class StageManager : MonoBehaviour
     public static StageManager Instance { get; private set; }
     public IObservable<int> CarryCompleteObserver => _carryCompleteSubject;
     public IObservable<int> GenerateTreasureObserver => _generateTreasureSubject;
-    public IObservable<Unit> DropTreasureObserver => _dropTreasureSubject;
+    public IObservable<int> DropTreasureObserver => _dropTreasureSubject;
     public IObservable<int> CurrentLimitTimeObserver => _currentLimitTimeRP;
     public IObservable<int> CurrentCarryAmountObsercer => _currentCarryAmountRP;
     public IObservable<int> ComboAmountObserver => _currentComboAmountRP;
@@ -52,7 +52,7 @@ public class StageManager : MonoBehaviour
     #region Event
     private Subject<int> _carryCompleteSubject = new Subject<int>();
     private Subject<int> _generateTreasureSubject = new Subject<int>();
-    private Subject<Unit> _dropTreasureSubject = new Subject<Unit>();
+    private Subject<int> _dropTreasureSubject = new Subject<int>();
 
     private ReactiveProperty<int> _currentLimitTimeRP = new ReactiveProperty<int>();
     #endregion
@@ -88,7 +88,7 @@ public class StageManager : MonoBehaviour
     public void OnCarryComplete(int carryAmount)
     {
         _currentCarryAmountRP.Value += carryAmount;
-        _currentComboAmountRP.Value++;
+        _currentComboAmountRP.Value += carryAmount;
 
         if (_maxComboAmount < _currentComboAmountRP.Value)
         {
@@ -107,12 +107,15 @@ public class StageManager : MonoBehaviour
         }
         _currentComboAmountRP.Value = 0;
     }
-    public void OnDropTreasure()
+    public void OnDropTreasure(int amount)
     {
-        _dropTreasureSubject.OnNext(Unit.Default);
+        _dropTreasureSubject.OnNext(amount);
         ResetCombo();
     }
-
+    /// <summary>
+    /// 今回のプレイ結果となる「運搬した数」「最大コンボ数」を返す
+    /// </summary>
+    /// <returns></returns>
     public (int, int) GetCurrentResultAmount()
     {
         return (_currentCarryAmountRP.Value, _maxComboAmount);

@@ -24,7 +24,7 @@ public class ResultView : MonoBehaviour
     }
     public void MaxComboAmountView(int amount)
     {
-        _maxComboAmountTMP.text = $"{amount}";
+        _maxComboAmountTMP.text = $"{amount}ƒRƒ“ƒ{";
     }
     public void TotalScoreView(int amount)
     {

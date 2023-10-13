@@ -18,11 +18,21 @@ public class TreasureGenerator : MonoBehaviour
     private Transform _treasureParent = default;
 
     [SerializeField]
+    private DropTreasure _dropTreasurePrefab = default;
+
+    [SerializeField]
+    private Transform _dropTreasureParent = default;
+
+    [SerializeField]
     private Transform[] _generatePoints = default;
+
+    [SerializeField]
+    private Transform _dropPoint = default;
     #endregion
 
     #region private
     private ObjectPool<Treasure> _treasurePool;
+    private ObjectPool<DropTreasure> _dropTreasurePool;
     private bool[] _isSetArray;
     #endregion
 
@@ -45,6 +55,7 @@ public class TreasureGenerator : MonoBehaviour
             _isSetArray[i] = false;
         }
         _treasurePool = new ObjectPool<Treasure>(_treasurePrefab, _treasureParent);
+        _dropTreasurePool = new ObjectPool<DropTreasure>(_dropTreasurePrefab, _dropTreasureParent);
     }
 
     private void Start()
@@ -52,19 +63,38 @@ public class TreasureGenerator : MonoBehaviour
         Initialize();
         StageManager.Instance.GenerateTreasureObserver
                              .TakeUntilDestroy(this)
-                             .Subscribe(value => OnGenerate(value));
+                             .Subscribe(value => OnGenerateTreasure(value));
+
+        StageManager.Instance.DropTreasureObserver
+                             .TakeUntilDestroy(this)
+                             .Subscribe(value => OnGenerateTreasure(value));
+
+        StageManager.Instance.DropTreasureObserver
+                             .TakeUntilDestroy(this)
+                             .Subscribe(value => OnGenerateDropTreasure(value));
     }
     #endregion
 
     #region public method
-    public void OnGenerate(int amount)
+    public void OnGenerateTreasure(int amount)
     {
         for (int i = 0; i < amount; i++)
         {
-            Generate();
+            GenerateTreasure();
         }
     }
-    private void Generate()
+
+    public void OnGenerateDropTreasure(int amount)
+    {
+        for (int i = 0; i < amount; i++)
+        {
+            GenerateDropTreasure();
+        }
+    }
+    #endregion
+
+    #region private method
+    private void GenerateTreasure()
     {
         bool isSetCompleted = false;
 
@@ -97,12 +127,15 @@ public class TreasureGenerator : MonoBehaviour
             }
         }
     }
-    #endregion
+    private void GenerateDropTreasure()
+    {
+        var drop = _dropTreasurePool.Rent();
 
-    #region private method
+        drop.transform.position = _dropPoint.position;
+    }
     private void Initialize()
     {
-        OnGenerate(MAX_GENERATE_AMOUNT);
+        OnGenerateTreasure(MAX_GENERATE_AMOUNT);
     }
     #endregion
 

@@ -14,22 +14,11 @@ public class Treasure : PoolableBase
     #region serialize
     #endregion
 
-    #region private
-    #endregion
-
-    #region Constant
-    #endregion
-
     #region Event
     private Subject<Unit> _getTreasureSubject = new Subject<Unit>();
     #endregion
 
     #region unity methods
-    private void Awake()
-    {
-
-    }
-
     private void Start()
     {
         this.OnTriggerEnterAsObservable()
@@ -37,8 +26,6 @@ public class Treasure : PoolableBase
             .Where(x => x.gameObject.CompareTag(GameTag.Player))
             .Subscribe(x =>
             {
-                Debug.Log(x.gameObject.name);
-
                 var player = x.gameObject.GetComponent<PlayerModel>();
 
                 if (player != null && player.IsCanCarry())
@@ -51,16 +38,10 @@ public class Treasure : PoolableBase
     }
     #endregion
 
-    #region public method
-    #endregion
-
     #region private method
     private void Use(PlayerModel player)
     {
         player.AddTreasure();
     }
-    #endregion
-    
-    #region coroutine method
     #endregion
 }

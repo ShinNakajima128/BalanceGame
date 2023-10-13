@@ -51,7 +51,7 @@ public class Carrier : MonoBehaviour
             .Where(x => x.gameObject.CompareTag(GameTag.Stage))
             .Subscribe(_ =>
             {
-                StageManager.Instance.OnDropTreasure();
+                StageManager.Instance.OnDropTreasure(_currentTreasureAmount);
                 Debug.Log($"hit");
             });
     }
